@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 // 🔴 APNA BOT TOKEN YAHAN DALO
-const TOKEN = "8556524594:AAHmqFROoexxzEeXZHZs1U9b6cPVd_TOzZc";
+const TOKEN = "8364224671:AAF2zLHWPixVcUT6m4pwHBRWGCzFueEC0H0";
 
 // 🔴 TUMHARA RENDER LIVE LINK
 const DOMAIN = "https://arrucambot.onrender.com";
